@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Φόρμα Παραγγελίας</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #eef2f5; }
+        .container { max-width: 1100px; margin: 20px auto; background-color: #fff; padding: 30px 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        h1 { color: #2c3e50; margin: 0; font-size: 2.2em; }
+        h2 { color: #34495e; margin-top: 30px; margin-bottom: 15px; font-size: 1.6em; border-bottom: 1px dashed #ccc; padding-bottom: 8px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #4a4a4a; }
+        input { width: 100%; padding: 12px; border: 1px solid #dce1e6; border-radius: 6px; box-sizing: border-box; font-size: 1em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
+        th, td { border: 1px solid #e0e6ed; padding: 12px; text-align: left; }
+        th { background-color: #4CAF50; color: white; font-weight: 600; }
+        .effective-price { font-weight: bold; color: #007bff; }
+        .totals-section { margin-top: 30px; padding: 25px; background-color: #f8f8f8; border-radius: 8px; text-align: right; border: 1px solid #e0e0e0; }
+        .totals-section p { margin: 12px 0; }
+        #final-total { font-size: 1.6em; font-weight: 700; color: #e74c3c; }
+        .export-buttons { margin-top: 40px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; }
+        .btn { padding: 14px 28px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.05em; font-weight: 600; color: white; }
+        .btn-send-mail { background-color: #007bff; }
+        .btn-txt { background-color: #34495e; }
+        .btn-clear { background-color: #f0ad4e; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Φόρμα Παραγγελίας</h1>
+        <form id="orderForm" onsubmit="return false;">
+            <h2>Στοιχεία Πελάτη</h2>
+            <div class="form-grid">
+                <div class="form-group"><label for="eponimia">Επωνυμία:</label><input type="text" id="eponimia" required></div>
+                <div class="form-group"><label for="afm">ΑΦΜ:</label><input type="text" id="afm"></div>
+                <div class="form-group"><label for="doy">ΔΟΥ:</label><input type="text" id="doy"></div>
+                <div class="form-group"><label for="mobile">Κινητό:</label><input type="tel" id="mobile"></div>
+                <div class="form-group"><label for="phone">Σταθερό:</label><input type="tel" id="phone"></div>
+                <div class="form-group"><label for="email">Email:</label><input type="email" id="email"></div>
+            </div>
+            <h2>Προϊόντα</h2>
+            <table id="product-table">
+                <thead>
+                    <tr><th>Ονομασία</th><th>Αρχική Τιμή</th><th>Ποσότητα</th><th>Δώρα</th><th>Τελική Τιμή/Τεμ.</th><th>Σύνολο</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="totals-section">
+                <p>Καθαρή Αξία: <span id="net-value">0.00 €</span></p>
+                <p>Αξία ΦΠΑ (24%): <span id="vat-value">0.00 €</span></p>
+                <p><strong>Τελικό Ποσό:</strong> <span id="final-total">0.00 €</span></p>
+            </div>
+            <div class="export-buttons">
+                <button type="button" class="btn btn-send-mail" onclick="sendEmailViaClient()">Αποστολή με Email</button>
+                <button type="button" class="btn btn-txt" onclick="previewAndSaveAsTXT()">Αποθήκευση σε TXT</button>
+                <button type="button" class="btn btn-clear" onclick="clearForm()">Καθαρισμός Φόρμας</button>
+            </div>
+        </form>
+    </div>
+    <div id="previewModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
+        <div style="background-color:#fefefe; margin:10% auto; padding:20px; width:80%; max-width:700px; border-radius:8px;">
+            <h2>Προεπισκόπηση</h2>
+            <div style="padding:15px 0; max-height:400px; overflow-y:auto;"><pre id="previewContent" style="white-space:pre-wrap; background-color:#f9f9f9; padding:15px; border:1px solid #ddd;"></pre></div>
+            <div style="padding-top:15px; border-top:1px solid #eee; text-align:right;">
+                <button id="saveTxtButton" style="background-color:#5cb85c; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer;">Αποθήκευση</button>
+                <button onclick="closePreviewModal()" style="background-color:#aaa; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer; margin-left:10px;">Κλείσιμο</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const products=[{name:'Z-DermAspis',price:5.03},{name:'ZplastCream 40gr',price:12.3},{name:'ZplastCream 100gr',price:24.79},{name:'Bruise Off Bite Out & Pain Free cream',price:5.26},{name:'Z-boost 30 caps',price:14.93},{name:'Z-boost 12 caps',price:6.99},{name:'Zarkolia Cosmetic pack',price:23.89},{name:'Hydralia Face cream 50ml',price:8.9},{name:'Revitacell + Face cream 50ml',price:10.69},{name:'Revitace Eyes cream Luce 30ml',price:10.1},{name:'Alveolair Sir',price:7.65}];
+        const tableBody=document.querySelector('#product-table tbody');
+        products.forEach(p=>{const row=document.createElement('tr');row.innerHTML=`<td>${p.name}</td><td>${p.price.toFixed(2)} €</td><td><input type="number" class="quantity" min="0" data-price="${p.price}" oninput="updateAll()" value="0"></td><td class="gifts">0</td><td class="effective-price">${p.price.toFixed(2)} €</td><td class="line-total">0.00 €</td>`;tableBody.appendChild(row);});
+        function calculateGifts(q){return q>=48?15:q>=24?6:q>=18?3:q>=9?1:0}
+        function updateAll(){let n=0;document.querySelectorAll("#product-table tbody tr").forEach(row=>{const q=row.querySelector(".quantity"),p=parseInt(q.value)||0,pr=parseFloat(q.dataset.price),g=calculateGifts(p),t=p+g,l=p*pr;let e=pr;p>0&&t>0&&(e=l/t);row.querySelector(".gifts").textContent=g;row.querySelector(".effective-price").innerHTML=`${e.toFixed(4)} €`;row.querySelector(".line-total").innerHTML=`${l.toFixed(2)} €`;n+=l;});const v=n*0.24,f=n+v;document.getElementById("net-value").innerHTML=`${n.toFixed(2)} €`;document.getElementById("vat-value").innerHTML=`${v.toFixed(2)} €`;document.getElementById("final-total").innerHTML=`${f.toFixed(2)} €`;}
+        function getOrderData(){const c={eponimia:document.getElementById("eponimia").value,afm:document.getElementById("afm").value,doy:document.getElementById("doy").value,mobile:document.getElementById("mobile").value,phone:document.getElementById("phone").value,email:document.getElementById("email").value};const i=[];document.querySelectorAll("#product-table tbody tr").forEach(row=>{const q=parseInt(row.querySelector('.quantity').value)||0;q>0&&i.push({name:row.cells[0].textContent,quantity:q,gifts:parseInt(row.querySelector('.gifts').textContent),effectivePrice:row.querySelector('.effective-price').textContent,total:row.querySelector('.line-total').textContent});});return{customerData:c,items:i,totals:{net:document.getElementById("net-value").textContent,vat:document.getElementById("vat-value").textContent,final:document.getElementById("final-total").textContent}};}
+        function generateOrderContent(){const{customerData:c,items:i,totals:t}=getOrderData();const b="\n\nΣΤΟΙΧΕΙΑ ΚΑΤΑΘΕΣΗΣ\n----------------------------------------\nIBAN: GR8901722520005252016160277\nΤράπεζα: Τράπεζα Πειραιώς\n";let content="========================================\n      Π Α Ρ Α Γ Γ Ε Λ Ι Α\n========================================\n\n";content+="ΣΤΟΙΧΕΙΑ ΠΕΛΑΤΗ\n----------------------------------------\n";content+=`Επωνυμία: ${c.eponimia}\nΑΦΜ: ${c.afm}\nΔΟΥ: ${c.doy}\n`;content+=`Email: ${c.email}\nΤηλ: ${c.mobile} / ${c.phone}\n\n`;content+="ΑΝΑΛΥΣΗ ΠΑΡΑΓΓΕΛΙΑΣ\n------------------------------------------------------------------------\n";i.forEach(item=>{let qText=item.gifts>0?`${item.quantity} (+${item.gifts} Δώρο)`:`${item.quantity}`;content+=`${item.name}\n`;content+=`  └─ Ποσότητα: ${qText.padEnd(15)} | Τελ. Τιμή/Τεμ.: ${item.effectivePrice.padEnd(12)} | Σύνολο: ${item.total.padStart(8)}\n\n`;});content+="------------------------------------------------------------------------\n\n";content+="ΣΥΝΟΛΑ\n----------------------------------------\n";content+=`Καθαρή Αξία:${''.padStart(15)} ${t.net}\n`;content+=`Αξία ΦΠΑ (24%):${''.padStart(11)} ${t.vat}\n`;content+=`ΤΕΛΙΚΟ ΠΟΣΟ:${''.padStart(14)} ${t.final}\n`;content+=b;return content;}
+        function sendEmailViaClient(){const{customerData:c,items:i}=getOrderData();if(i.length===0){alert("Η παραγγελία είναι κενή.");return}const body=generateOrderContent();const subject=`Νέα Παραγγελία από ${c.eponimia||'Νέος Πελάτης'}`;let mailtoLink=`mailto:pzaro2010@gmail.com,liapaki2017@gmail.com`;c.email&&(mailtoLink+=`?cc=${c.email}`);mailtoLink+=`&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;window.location.href=mailtoLink;}
+        function previewAndSaveAsTXT(){if(getOrderData().items.length===0){alert("Η παραγγελία είναι κενή.");return}const content=generateOrderContent();const filename=`Παραγγελία_${getOrderData().customerData.eponimia.replace(/\s/g,'_')||'customer'}.txt`;document.getElementById('previewContent').textContent=content;document.getElementById('previewModal').style.display='block';document.getElementById('saveTxtButton').onclick=()=>saveTextAsFile(content,filename);}
+        function saveTextAsFile(text,filename){const blob=new Blob([text],{type:'text/plain;charset=utf-8'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=filename;document.body.appendChild(link);link.click();document.body.removeChild(link);closePreviewModal();}
+        function closePreviewModal(){document.getElementById('previewModal').style.display='none';}
+        function clearForm(){document.getElementById("orderForm").reset();document.querySelectorAll(".quantity").forEach(q=>{q.value="0"});updateAll();}
+        updateAll();
+    </script>
+</body>
+</html>
