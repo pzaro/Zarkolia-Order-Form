@@ -24,8 +24,6 @@
         h1, h2, h3 { color: #2c3e50; }
         h1 { font-size: 2.2em; margin-bottom: 25px; text-align: center; }
         h2 { font-size: 1.6em; border-bottom: 2px solid #4CAF50; padding-bottom: 8px; margin-top: 40px; }
-
-        /* --- Γκαλερί Προϊόντων --- */
         .product-gallery {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -56,10 +54,8 @@
             margin: 0;
             font-size: 0.9em;
             color: #34495e;
-            height: 40px; 
+            height: 40px;
         }
-
-        /* --- Modal Περιγραφής Προϊόντος --- */
         .modal {
             display: none; position: fixed; z-index: 2000; left: 0; top: 0;
             width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6);
@@ -80,8 +76,8 @@
         .modal-body img { float: left; margin-right: 20px; margin-bottom: 10px; max-width: 150px; border-radius: 5px; }
         .modal-body p { text-align: justify; line-height: 1.7; color: #555; }
         .modal-body h3 { font-size: 1.2em; color: #333; margin-top: 20px; }
-
-        /* --- Υπόλοιπο Στυλ (Φόρμα, Πίνακας, κλπ.) --- */
+        .modal-body pre { white-space: pre-wrap; word-wrap: break-word; background-color: #f9f9f9; padding: 15px; border: 1px solid #ddd; font-family: 'Courier New', monospace; }
+        .modal-footer { padding-top: 15px; border-top: 1px solid #eee; text-align: right; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
         table { width: 100%; border-collapse: collapse; margin-top: 25px; }
         th, td { border: 1px solid #e0e6ed; padding: 12px; text-align: left; }
@@ -91,6 +87,8 @@
         .totals-section { margin-top: 30px; padding: 25px; text-align: right; }
         .export-buttons { margin-top: 40px; display: flex; justify-content: center; gap: 15px; }
         .btn { padding: 14px 28px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.05em; font-weight: 600; color: white; }
+        .btn-modal-save { background-color: #5cb85c; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-modal-close { background-color: #aaa; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px; }
     </style>
 </head>
 <body>
@@ -103,19 +101,29 @@
         <form id="orderForm" onsubmit="return false;">
             <h2>Φόρμα Παραγγελίας</h2>
             <div class="form-grid">
-                 </div>
+                <div class="form-group"><label for="eponimia">Επωνυμία:</label><input type="text" id="eponimia" required></div>
+                <div class="form-group"><label for="afm">ΑΦΜ:</label><input type="text" id="afm"></div>
+                <div class="form-group"><label for="doy">ΔΟΥ:</label><input type="text" id="doy"></div>
+                <div class="form-group"><label for="mobile">Κινητό:</label><input type="tel" id="mobile"></div>
+                <div class="form-group"><label for="phone">Σταθερό:</label><input type="tel" id="phone"></div>
+                <div class="form-group"><label for="email">Email:</label><input type="email" id="email"></div>
+            </div>
             <table id="product-table">
                 <thead>
-                    <tr>
-                        <th>Ονομασία</th><th>Αρχική Τιμή</th><th>Ποσότητα</th><th>Δώρα</th><th>Τελική Τιμή/Τεμ.</th><th>Σύνολο</th>
-                    </tr>
+                    <tr><th>Ονομασία</th><th>Αρχική Τιμή</th><th>Ποσότητα</th><th>Δώρα</th><th>Τελική Τιμή/Τεμ.</th><th>Σύνολο</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
             <div class="totals-section">
-                </div>
+                <p>Καθαρή Αξία: <span id="net-value">0.00 €</span></p>
+                <p>Αξία ΦΠΑ (24%): <span id="vat-value">0.00 €</span></p>
+                <p><strong>Τελικό Ποσό:</strong> <span id="final-total">0.00 €</span></p>
+            </div>
             <div class="export-buttons">
-                </div>
+                <button type="button" class="btn" style="background-color:#007bff" onclick="sendEmailViaClient()">Αποστολή με Email</button>
+                <button type="button" class="btn" style="background-color:#34495e" onclick="previewAndSaveAsTXT()">Αποθήκευση σε TXT</button>
+                <button type="button" class="btn" style="background-color:#f0ad4e" onclick="clearForm()">Καθαρισμός Φόρμας</button>
+            </div>
         </form>
     </div>
 
@@ -132,109 +140,41 @@
         </div>
     </div>
     
+    <div id="previewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Προεπισκόπηση Παραγγελίας</h2>
+                <span class="close-button" onclick="closePreviewModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <pre id="previewContent"></pre>
+            </div>
+            <div class="modal-footer">
+                <button id="saveTxtButton" class="btn-modal-save">Αποθήκευση Αρχείου</button>
+                <button class="btn-modal-close" onclick="closePreviewModal()">Κλείσιμο</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
-        // --- ΒΑΣΙΚΑ ΔΕΔΟΜΕΝΑ ΠΡΟΪΟΝΤΩΝ ΓΙΑ ΤΗ ΦΟРМА ---
-        const products = [
-            { name: 'Z-DermAspis', price: 5.03 }, { name: 'ZplastCream 40gr', price: 12.30 }, { name: 'ZplastCream 100gr', price: 24.79 },
-            { name: 'Bruise Off Bite Out & Pain Free cream', price: 5.26 }, { name: 'Z-boost 30 caps', price: 14.93 }, { name: 'Z-boost 12 caps', price: 6.99 },
-            { name: 'Zarkolia Cosmetic pack', price: 23.89 }, { name: 'Hydralia Face cream 50ml', price: 8.90 }, { name: 'Revitacell + Face cream 50ml', price: 10.69 },
-            { name: 'Revitace Eyes cream Luce 30ml', price: 10.10 }, { name: 'Alveolair Sir', price: 7.65 }
-        ];
-
-        // --- ΔΕΔΟΜΕΝΑ ΓΙΑ ΤΗ ΓΚΑΛΕΡΙ ΚΑΙ ΤΙΣ ΠΕΡΙΓΡΑΦΕΣ ---
-        const productDetails = [
-            {
-                id: 'alveolair',
-                name: 'Alveol Air Φυτικό Σιρόπι',
-                image: 'URL_ΕΙΚΟΝΑΣ_ΣΙΡΟΠΙΟΥ_ΕΔΩ', // <-- ΑΛΛΑΞΤΕ ΤΟ
-                description: `<h3>Φυτικό Σιρόπι για Βήχα</h3><p>Το φυτικό σιρόπι για βήχα είναι η ιδανική λύση για την ανακούφιση από ξηρό ή παραγωγικό βήχα. Η μοναδική του σύνθεση μαλακώνει τον ερεθισμένο αεραγωγό, ενώ ενισχύει την υγεία του λαιμού και του αναπνευστικού συστήματος.</p><h3>Βασικά Συστατικά και Οφέλη</h3><p><strong>Ευκάλυπτος:</strong> Παρέχει αντιφλεγμονώδεις και αντισηπτικές ιδιότητες.<br><strong>Θυμάρι:</strong> Διαθέτει ισχυρές αντιβακτηριακές ιδιότητες.<br><strong>Αλθέα:</strong> Καταπραΰνει την ευαίσθητη περιοχή του λαιμού.<br><strong>Κράνι και Berries:</strong> Πλούσια σε αντιοξειδωτικά.<br><strong>Ιπποφαές:</strong> Υψηλή συγκέντρωση βιταμίνης C.</p>`
-            },
-            {
-                id: 'revitacell_plus',
-                name: 'Revitacell Plus',
-                image: 'URL_ΕΙΚΟΝΑΣ_REVITACELL_PLUS_ΕΔΩ', // <-- ΑΛΛΑΞΤΕ ΤΟ
-                description: `<h3>Προηγμένη Αντιρυτιδική Κρέμα Σύσφιξης</h3><p>Η Zarkolia Revitacell Plus είναι μια προηγμένη αντιρυτιδική κρέμα σύσφιξης για ολική επανόρθωση. Η πλούσια σύνθεσή της με Μαστίχα Χίου, Έλαιο Ροδιού και Super Berries προσφέρει ισχυρή αντιοξειδωτική προστασία κατά της πρόωρης γήρανσης.</p><p>Ως κρέμα με υαλουρονικό οξύ, ενυδατώνει σε βάθος και “γεμίζει” τις λεπτές γραμμές, ενώ η Αλόη καταπραΰνει την επιδερμίδα. Προσφέρει ορατό αποτέλεσμα lifting, αφήνοντας το δέρμα λείο, σφριγηλό και νεανικό.</p>`
-            },
-            {
-                id: 'revitacell_eyes',
-                name: 'Revitacell Eyes Luce',
-                image: 'URL_ΕΙΚΟΝΑΣ_EYES_LUCE_ΕΔΩ', // <-- ΑΛΛΑΞΤΕ ΤΟ
-                description: `<h3>Επανορθωτική Κρέμα Ματιών</h3><p>Η Επανορθωτική Κρέμα Ματιών μειώνει μαύρους κύκλους, πρήξιμο και ρυτίδες γύρω από τα μάτια. Με Ιπποκαστανιά και Άρνικα, προσφέρει αντιοξειδωτική προστασία και καταπραΰνει την περιοχή.</p><p>Το Υαλουρονικό Οξύ ενυδατώνει και αυξάνει τη σφριγηλότητα του δέρματος, ενώ τα φυσικά έλαια θρέφουν την επιδερμίδα.</p>`
-            },
-            {
-                id: 'hydralia',
-                name: 'Hydralia Face Cream',
-                image: 'URL_ΕΙΚΟΝΑΣ_HYDRALIA_ΕΔΩ', // <-- ΑΛΛΑΞΤΕ ΤΟ
-                description: `<h3>Υπέρ Ενυδατική Κρέμα Προσώπου</h3><p>Η ενυδατική κρέμα Hydralia της Zarkolia προσφέρει μια πλούσια, ενυδατική φόρμουλα που ενυδατώνει βαθιά την επιδερμίδα, προσδίδοντας απαλή υφή και αναζωογόνηση. Δροσίζει το πρόσωπο άμεσα και αποκαθιστά τη φυσιολογική υγρασία της επιδερμίδας.</p><p>Εμπλουτισμένη με Έλαια Αβοκάντο, Jojoba & Αμυγδάλου, Υαλουρονικό Οξύ και Αλόη, προσφέρει εντατική προστασία ενάντια στην αφυδάτωση.</p>`
-            },
-            {
-                id: 'zplast',
-                name: 'Zplast Cream',
-                image: 'URL_ΕΙΚΟΝΑΣ_ZPLAST_ΕΔΩ', // <-- ΑΛΛΑΞΤΕ ΤΟ
-                description: `<h3>Αναπλαστική Κρέμα για Επούλωση</h3><p>Η Zplast Cream προσφέρει άμεση βοήθεια σε καταστάσεις όπως κάψιμο από τον ήλιο, εγκαύματα και φυσαλίδες. Λειτουργεί ως μία ισχυρή αναπλαστική κρέμα για ουλές, καθώς επιταχύνει τη διαδικασία της επούλωσης.</p><p>Με φυσικά συστατικά όπως το μέλι, η μαστίχα Χίου και επιλεγμένα ελληνικά βότανα, καταπολεμά βακτήρια, μειώνει τις φλεγμονές και ενυδατώνει το δέρμα.</p>`
-            },
-            {
-                id: 'boost_caps',
-                name: 'Z-Boost Caps',
-                image: 'URL_ΕΙΚΟΝΑΣ_BOOST_CAPS_ΕΔΩ', // <-- ΑΛΛΑΞΤΕ ΤΟ
-                description: `
-                    <h3>Συμπλήρωμα για την Ενίσχυση του Ανοσοποιητικού</h3>
-                    <p>Ανακαλύψτε το Z-Boost, το εξειδικευμένο συμπλήρωμα διατροφής που ενισχύει την άμυνα του οργανισμού σας! Με έναν ισχυρό συνδυασμό αντιοξειδωτικών συστατικών, όπως το άλφα-λιποϊκό οξύ και το συνένζυμο Q10, το Z-Boost προστατεύει τον οργανισμό από καθημερινές απειλές.</p>
-                    <h3>Βασικά Συστατικά</h3>
-                    <p>Το Z-Boost περιέχει έναν μοναδικό συνδυασμό αντιοξειδωτικών: άλφα-λιποϊκό οξύ, συνένζυμο Q10, ακετυλοκυστεΐνη, ψευδάργυρο και σελήνιο. Αυτά τα συστατικά υποστηρίζουν τον ενεργειακό μεταβολισμό, προστατεύουν τα κύτταρα από το οξειδωτικό στρες και ενισχύουν συνολικά τη λειτουργία του ανοσοποιητικού.</p>
-                    <p><em>Διαθέσιμο σε συσκευασίες με 12 και 30 κάψουλες.</em></p>
-                `
-            },
-             {
-                id: 'cosmetic_pack',
-                name: 'Zarkolia Cosmetic Pack',
-                image: 'URL_ΕΙΚΟΝΑΣ_PACK_ΕΔΩ', // <-- ΑΛΛΑΞΤΕ ΤΟ
-                description: `<h3>Πακέτο Περιποίησης Zarkolia</h3><p>Το πακέτο περιλαμβάνει τις κρέμες Hydralia, Revitacell και Revitacell Eyes Luce για μια ολοκληρωμένη φροντίδα ενυδάτωσης και αντιγήρανσης προσώπου και ματιών.</p>`
-            }
-        ];
+        const productDetails=[{id:'alveolair',name:'Alveol Air Φυτικό Σιρόπι',image:'URL_ΕΙΚΟΝΑΣ_ΣΙΡΟΠΙΟΥ_ΕΔΩ',description:`<h3>Φυτικό Σιρόπι για Βήχα</h3><p>Το φυτικό σιρόπι για βήχα είναι η ιδανική λύση για την ανακούφιση από ξηρό ή παραγωγικό βήχα. Η μοναδική του σύνθεση μαλακώνει τον ερεθισμένο αεραγωγό, ενώ ενισχύει την υγεία του λαιμού και του αναπνευστικού συστήματος.</p><h3>Βασικά Συστατικά και Οφέλη</h3><p><strong>Ευκάλυπτος:</strong> Παρέχει αντιφλεγμονώδεις και αντισηπτικές ιδιότητες.<br><strong>Θυμάρι:</strong> Διαθέτει ισχυρές αντιβακτηριακές ιδιότητες.<br><strong>Αλθέα:</strong> Καταπραΰνει την ευαίσθητη περιοχή του λαιμού.<br><strong>Κράνι και Berries:</strong> Πλούσια σε αντιοξειδωτικά.<br><strong>Ιπποφαές:</strong> Υψηλή συγκέντρωση βιταμίνης C.</p>`},{id:'revitacell_plus',name:'Revitacell Plus',image:'URL_ΕΙΚΟΝΑΣ_REVITACELL_PLUS_ΕΔΩ',description:`<h3>Προηγμένη Αντιρυτιδική Κρέμα Σύσφιξης</h3><p>Η Zarkolia Revitacell Plus είναι μια προηγμένη αντιρυτιδική κρέμα σύσφιξης για ολική επανόρθωση. Η πλούσια σύνθεσή της με Μαστίχα Χίου, Έλαιο Ροδιού και Super Berries προσφέρει ισχυρή αντιοξειδωτική προστασία κατά της πρόωρης γήρανσης.</p><p>Ως κρέμα με υαλουρονικό οξύ, ενυδατώνει σε βάθος και “γεμίζει” τις λεπτές γραμμές, ενώ η Αλόη καταπραΰνει την επιδερμίδα. Προσφέρει ορατό αποτέλεσμα lifting, αφήνοντας το δέρμα λείο, σφριγηλό και νεανικό.</p>`},{id:'revitacell_eyes',name:'Revitacell Eyes Luce',image:'URL_ΕΙΚΟΝΑΣ_EYES_LUCE_ΕΔΩ',description:`<h3>Επανορθωτική Κρέμα Ματιών</h3><p>Η Επανορθωτική Κρέμα Ματιών μειώνει μαύρους κύκλους, πρήξιμο και ρυτίδες γύρω από τα μάτια. Με Ιπποκαστανιά και Άρνικα, προσφέρει αντιοξειδωτική προστασία και καταπραΰνει την περιοχή.</p><p>Το Υαλουρονικό Οξύ ενυδατώνει και αυξάνει τη σφριγηλότητα του δέρματος, ενώ τα φυσικά έλαια θρέφουν την επιδερμίδα.</p>`},{id:'hydralia',name:'Hydralia Face Cream',image:'URL_ΕΙΚΟΝΑΣ_HYDRALIA_ΕΔΩ',description:`<h3>Υπέρ Ενυδατική Κρέμα Προσώπου</h3><p>Η ενυδατική κρέμα Hydralia της Zarkolia προσφέρει μια πλούσια, ενυδατική φόρμουλα που ενυδατώνει βαθιά την επιδερμίδα, προσδίδοντας απαλή υφή και αναζωογόνηση. Δροσίζει το πρόσωπο άμεσα και αποκαθιστά τη φυσιολογική υγρασία της επιδερμίδας.</p><p>Εμπλουτισμένη με Έλαια Αβοκάντο, Jojoba & Αμυγδάλου, Υαλουρονικό Οξύ και Αλόη, προσφέρει εντατική προστασία ενάντια στην αφυδάτωση.</p>`},{id:'zplast',name:'Zplast Cream',image:'URL_ΕΙΚΟΝΑΣ_ZPLAST_ΕΔΩ',description:`<h3>Αναπλαστική Κρέμα για Επούλωση</h3><p>Η Zplast Cream προσφέρει άμεση βοήθεια σε καταστάσεις όπως κάψιμο από τον ήλιο, εγκαύματα και φυσαλίδες. Λειτουργεί ως μία ισχυρή αναπλαστική κρέμα για ουλές, καθώς επιταχύνει τη διαδικασία της επούλωσης.</p><p>Με φυσικά συστατικά όπως το μέλι, η μαστίχα Χίου και επιλεγμένα ελληνικά βότανα, καταπολεμά βακτήρια, μειώνει τις φλεγμονές και ενυδατώνει το δέρμα.</p>`},{id:'boost_caps',name:'Z-Boost Caps',image:'URL_ΕΙΚΟΝΑΣ_BOOST_CAPS_ΕΔΩ',description:`<h3>Συμπλήρωμα για την Ενίσχυση του Ανοσοποιητικού</h3><p>Ανακαλύψτε το Z-Boost, το εξειδικευμένο συμπλήρωμα διατροφής που ενισχύει την άμυνα του οργανισμού σας! Με έναν ισχυρό συνδυασμό αντιοξειδωτικών συστατικών, όπως το άλφα-λιποϊκό οξύ και το συνένζυμο Q10, το Z-Boost προστατεύει τον οργανισμό από καθημερινές απειλές.</p><h3>Βασικά Συστατικά</h3><p>Το Z-Boost περιέχει έναν μοναδικό συνδυασμό αντιοξειδωτικών: άλφα-λιποϊκό οξύ, συνένζυμο Q10, ακετυλοκυστεΐνη, ψευδάργυρο και σελήνιο. Αυτά τα συστατικά υποστηρίζουν τον ενεργειακό μεταβολισμό, προστατεύουν τα κύτταρα από το οξειδωτικό στρες και ενισχύουν συνολικά τη λειτουργία του ανοσοποιητικού.</p><p><em>Διαθέσιμο σε συσκευασίες με 12 και 30 κάψουλες.</em></p>`},{id:'cosmetic_pack',name:'Zarkolia Cosmetic Pack',image:'URL_ΕΙΚΟΝΑΣ_PACK_ΕΔΩ',description:`<h3>Πακέτο Περιποίησης Zarkolia</h3><p>Το πακέτο περιλαμβάνει τις κρέμες Hydralia, Revitacell και Revitacell Eyes Luce για μια ολοκληρωμένη φροντίδα ενυδάτωσης και αντιγήρανσης προσώπου και ματιών.</p>`}];
+        const products=[{name:'Z-DermAspis',price:5.03},{name:'ZplastCream 40gr',price:12.3},{name:'ZplastCream 100gr',price:24.79},{name:'Bruise Off Bite Out & Pain Free cream',price:5.26},{name:'Z-boost 30 caps',price:14.93},{name:'Z-boost 12 caps',price:6.99},{name:'Zarkolia Cosmetic pack',price:23.89},{name:'Hydralia Face cream 50ml',price:8.9},{name:'Revitacell + Face cream 50ml',price:10.69},{name:'Revitace Eyes cream Luce 30ml',price:10.1},{name:'Alveolair Sir',price:7.65}];
         
-        // --- ΔΗΜΙΟΥΡΓΙΑ ΤΗΣ ΙΣΤΟΣΕΛΙΔΑΣ ---
-        const gallery = document.getElementById('productGallery');
-        productDetails.forEach(product => {
-            const card = document.createElement('div');
-            card.className = 'product-card';
-            card.onclick = () => showProductDetails(product.id);
-            card.innerHTML = `<img src="${product.image}" alt="${product.name}"><h4>${product.name}</h4>`;
-            gallery.appendChild(card);
-        });
+        const gallery=document.getElementById('productGallery');productDetails.forEach(p=>{const c=document.createElement('div');c.className='product-card';c.onclick=()=>showProductDetails(p.id);c.innerHTML=`<img src="${p.image}" alt="${p.name}"><h4>${p.name}</h4>`;gallery.appendChild(c);});
+        const productModal=document.getElementById('productModal');function showProductDetails(id){const p=productDetails.find(p=>p.id===id);if(p){document.getElementById('modalProductName').textContent=p.name;document.getElementById('modalProductImage').src=p.image;document.getElementById('modalProductDescription').innerHTML=p.description;productModal.style.display='block';}}
+        function closeProductModal(){productModal.style.display='none';}
 
-        const productModal = document.getElementById('productModal');
-        function showProductDetails(productId) {
-            const product = productDetails.find(p => p.id === productId);
-            if (product) {
-                document.getElementById('modalProductName').textContent = product.name;
-                document.getElementById('modalProductImage').src = product.image;
-                document.getElementById('modalProductDescription').innerHTML = product.description;
-                productModal.style.display = 'block';
-            }
-        }
-        function closeProductModal() { productModal.style.display = 'none'; }
-
-        // --- (Το υπόλοιπο script για τη φόρμα παραμένει ίδιο με πριν) ---
-        // Αυτό το τμήμα του κώδικα προσθέτει δυναμικά τα πεδία και τις λειτουργίες της φόρμας
-        const formContainer = document.querySelector('#orderForm .form-grid');
-        formContainer.innerHTML = `<div class="form-group"><label for="eponimia">Επωνυμία:</label><input type="text" id="eponimia" required></div><div class="form-group"><label for="afm">ΑΦΜ:</label><input type="text" id="afm"></div><div class="form-group"><label for="doy">ΔΟΥ:</label><input type="text" id="doy"></div><div class="form-group"><label for="mobile">Κινητό:</label><input type="tel" id="mobile"></div><div class="form-group"><label for="phone">Σταθερό:</label><input type="tel" id="phone"></div><div class="form-group"><label for="email">Email:</label><input type="email" id="email"></div>`;
-        
-        const totalsContainer = document.querySelector('.totals-section');
-        totalsContainer.innerHTML = `<p>Καθαρή Αξία: <span id="net-value">0.00 €</span></p><p>Αξία ΦΠΑ (24%): <span id="vat-value">0.00 €</span></p><p><strong>Τελικό Ποσό:</strong> <span id="final-total">0.00 €</span></p>`;
-
-        const buttonsContainer = document.querySelector('.export-buttons');
-        buttonsContainer.innerHTML = `<button type="button" class="btn" style="background-color:#007bff" onclick="sendEmailViaClient()">Αποστολή με Email</button><button type="button" class="btn" style="background-color:#34495e" onclick="previewAndSaveAsTXT()">Αποθήκευση σε TXT</button><button type="button" class="btn" style="background-color:#f0ad4e" onclick="clearForm()">Καθαρισμός Φόρμας</button>`;
-
-        const tableBody = document.querySelector('#product-table tbody');
-        products.forEach(p => {
-            const row = document.createElement('tr');
-            row.innerHTML = `<td>${p.name}</td><td>${p.price.toFixed(2)} €</td><td><input type="number" class="quantity" min="0" data-price="${p.price}" oninput="updateAll()" value="0"></td><td class="gifts">0</td><td class="effective-price">${p.price.toFixed(2)} €</td><td class="line-total">0.00 €</td>`;
-            tableBody.appendChild(row);
-        });
-
-        function calculateGifts(q){return q>=48?15:q>=24?6:q>=18?3:q>=9?1:0}function updateAll(){let n=0;document.querySelectorAll("#product-table tbody tr").forEach(row=>{const q=row.querySelector(".quantity"),p=parseInt(q.value)||0,pr=parseFloat(q.dataset.price),g=calculateGifts(p),t=p+g,l=p*pr;let e=pr;p>0&&t>0&&(e=l/t);row.querySelector(".gifts").textContent=g;row.querySelector(".effective-price").innerHTML=`${e.toFixed(4)} €`;row.querySelector(".line-total").innerHTML=`${l.toFixed(2)} €`;n+=l;});const v=n*0.24,f=n+v;document.getElementById("net-value").innerHTML=`${n.toFixed(2)} €`;document.getElementById("vat-value").innerHTML=`${v.toFixed(2)} €`;document.getElementById("final-total").innerHTML=`${f.toFixed(2)} €`;}function getOrderData(){const c={eponimia:document.getElementById("eponimia").value,afm:document.getElementById("afm").value,doy:document.getElementById("doy").value,mobile:document.getElementById("mobile").value,phone:document.getElementById("phone").value,email:document.getElementById("email").value};const i=[];document.querySelectorAll("#product-table tbody tr").forEach(row=>{const q=parseInt(row.querySelector('.quantity').value)||0;q>0&&i.push({name:row.cells[0].textContent,quantity:q,gifts:parseInt(row.querySelector('.gifts').textContent),effectivePrice:row.querySelector('.effective-price').textContent,total:row.querySelector('.line-total').textContent});});return{customerData:c,items:i,totals:{net:document.getElementById("net-value").textContent,vat:document.getElementById("vat-value").textContent,final:document.getElementById("final-total").textContent}};}function generateOrderContent(){const{customerData:c,items:i,totals:t}=getOrderData();const b="\n\nΣΤΟΙΧΕΙΑ ΚΑΤΑΘΕΣΗΣ\n----------------------------------------\nIBAN: GR8901722520005252016160277\nΤράπεζα: Τράπεζα Πειραιώς\n";let content="========================================\n      Π Α Ρ Α Γ Γ Ε Λ Ι Α\n========================================\n\n";content+="ΣΤΟΙΧΕΙΑ ΠΕΛΑΤΗ\n----------------------------------------\n";content+=`Επωνυμία: ${c.eponimia}\nΑΦΜ: ${c.afm}\nΔΟΥ: ${c.doy}\n`;content+=`Email: ${c.email}\nΤηλ: ${c.mobile} / ${c.phone}\n\n`;content+="ΑΝΑΛΥΣΗ ΠΑΡΑΓΓΕΛΙΑΣ\n------------------------------------------------------------------------\n";i.forEach(item=>{let qText=item.gifts>0?`${item.quantity} (+${item.gifts} Δώρο)`:`${item.quantity}`;content+=`${item.name}\n`;content+=`  └─ Ποσότητα: ${qText.padEnd(15)} | Τελ. Τιμή/Τεμ.: ${item.effectivePrice.padEnd(12)} | Σύνολο: ${item.total.padStart(8)}\n\n`;});content+="------------------------------------------------------------------------\n\n";content+="ΣΥΝΟΛΑ\n----------------------------------------\n";content+=`Καθαρή Αξία:${''.padStart(15)} ${t.net}\n`;content+=`Αξία ΦΠΑ (24%):${''.padStart(11)} ${t.vat}\n`;content+=`ΤΕΛΙΚΟ ΠΟΣΟ:${''.padStart(14)} ${t.final}\n`;content+=b;return content;}function sendEmailViaClient(){const{customerData:c,items:i}=getOrderData();if(i.length===0){alert("Η παραγγελία είναι κενή.");return}const body=generateOrderContent();const subject=`Νέα Παραγγελία από ${c.eponimia||'Νέος Πελάτης'}`;let mailtoLink=`mailto:pzaro2010@gmail.com,liapaki2017@gmail.com`;c.email&&(mailtoLink+=`?cc=${c.email}`);mailtoLink+=`&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;window.location.href=mailtoLink;}function previewAndSaveAsTXT(){if(getOrderData().items.length===0){alert("Η παραγγελία είναι κενή.");return}const content=generateOrderContent();const filename=`Παραγγελία_${getOrderData().customerData.eponimia.replace(/\s/g,'_')||'customer'}.txt`;document.getElementById('previewContent').textContent=content;document.getElementById('previewModal').style.display='block';document.getElementById('saveTxtButton').onclick=()=>saveTextAsFile(content,filename);}function saveTextAsFile(text,filename){const blob=new Blob([text],{type:'text/plain;charset=utf-8'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=filename;document.body.appendChild(link);link.click();document.body.removeChild(link);closePreviewModal();}function closePreviewModal(){document.getElementById('previewModal').style.display='none';}function clearForm(){document.getElementById("orderForm").reset();document.querySelectorAll(".quantity").forEach(q=>{q.value="0"});updateAll();}updateAll();
-
+        const tableBody=document.querySelector('#product-table tbody');products.forEach(p=>{const r=document.createElement('tr');r.innerHTML=`<td>${p.name}</td><td>${p.price.toFixed(2)} €</td><td><input type="number" class="quantity" min="0" data-price="${p.price}" oninput="updateAll()" value="0"></td><td class="gifts">0</td><td class="effective-price">${p.price.toFixed(2)} €</td><td class="line-total">0.00 €</td>`;tableBody.appendChild(r);});
+        function calculateGifts(q){return q>=48?15:q>=24?6:q>=18?3:q>=9?1:0}
+        function updateAll(){let t=0;document.querySelectorAll("#product-table tbody tr").forEach(r=>{const q=r.querySelector(".quantity"),p=parseInt(q.value)||0,d=parseFloat(q.dataset.price),g=calculateGifts(p),a=p+g,l=p*d;let e=d;p>0&&a>0&&(e=l/a);r.querySelector(".gifts").textContent=g;r.querySelector(".effective-price").innerHTML=`${e.toFixed(4)} €`;r.querySelector(".line-total").innerHTML=`${l.toFixed(2)} €`;t+=l;});const v=t*0.24,f=t+v;document.getElementById("net-value").innerHTML=`${t.toFixed(2)} €`;document.getElementById("vat-value").innerHTML=`${v.toFixed(2)} €`;document.getElementById("final-total").innerHTML=`${f.toFixed(2)} €`;}
+        function getOrderData(){const c={eponimia:document.getElementById("eponimia").value,afm:document.getElementById("afm").value,doy:document.getElementById("doy").value,mobile:document.getElementById("mobile").value,phone:document.getElementById("phone").value,email:document.getElementById("email").value};const i=[];document.querySelectorAll("#product-table tbody tr").forEach(r=>{const q=parseInt(r.querySelector('.quantity').value)||0;q>0&&i.push({name:r.cells[0].textContent,quantity:q,gifts:parseInt(r.querySelector('.gifts').textContent),effectivePrice:r.querySelector('.effective-price').textContent,total:r.querySelector('.line-total').textContent});});return{customerData:c,items:i,totals:{net:document.getElementById("net-value").textContent,vat:document.getElementById("vat-value").textContent,final:document.getElementById("final-total").textContent}}}
+        function generateOrderContent(){const{customerData:c,items:i,totals:t}=getOrderData();const b="\n\nΣΤΟΙΧΕΙΑ ΚΑΤΑΘΕΣΗΣ\n----------------------------------------\nIBAN: GR8901722520005252016160277\nΤράπεζα: Τράπεζα Πειραιώς\n";let content="========================================\n      Π Α Ρ Α Γ Γ Ε Λ Ι Α\n========================================\n\n";content+="ΣΤΟΙΧΕΙΑ ΠΕΛΑΤΗ\n----------------------------------------\n";content+=`Επωνυμία: ${c.eponimia}\nΑΦΜ: ${c.afm}\nΔΟΥ: ${c.doy}\n`;content+=`Email: ${c.email}\nΤηλ: ${c.mobile} / ${c.phone}\n\n`;content+="ΑΝΑΛΥΣΗ ΠΑΡΑΓΓΕΛΙΑΣ\n------------------------------------------------------------------------\n";i.forEach(item=>{let qText=item.gifts>0?`${item.quantity} (+${item.gifts} Δώρο)`:`${item.quantity}`;content+=`${item.name}\n`;content+=`  └─ Ποσότητα: ${qText.padEnd(15)} | Τελ. Τιμή/Τεμ.: ${item.effectivePrice.padEnd(12)} | Σύνολο: ${item.total.padStart(8)}\n\n`;});content+="------------------------------------------------------------------------\n\n";content+="ΣΥΝΟΛΑ\n----------------------------------------\n";content+=`Καθαρή Αξία:${''.padStart(15)} ${t.net}\n`;content+=`Αξία ΦΠΑ (24%):${''.padStart(11)} ${t.vat}\n`;content+=`ΤΕΛΙΚΟ ΠΟΣΟ:${''.padStart(14)} ${t.final}\n`;content+=b;return content;}
+        function sendEmailViaClient(){const{customerData:c,items:i}=getOrderData();if(i.length===0){alert("Η παραγγελία είναι κενή.");return}const body=generateOrderContent();const subject=`Νέα Παραγγελία από ${c.eponimia||'Νέος Πελάτης'}`;let mailtoLink=`mailto:pzaro2010@gmail.com,liapaki2017@gmail.com`;c.email&&(mailtoLink+=`?cc=${c.email}`);mailtoLink+=`&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;window.location.href=mailtoLink;}
+        function previewAndSaveAsTXT(){if(getOrderData().items.length===0){alert("Η παραγγελία είναι κενή.");return}const content=generateOrderContent();const filename=`Παραγγελία_${getOrderData().customerData.eponimia.replace(/\s/g,'_')||'customer'}.txt`;document.getElementById('previewContent').textContent=content;document.getElementById('previewModal').style.display='block';document.getElementById('saveTxtButton').onclick=()=>saveTextAsFile(content,filename);}
+        function saveTextAsFile(text,filename){const blob=new Blob([text],{type:'text/plain;charset=utf-8'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=filename;document.body.appendChild(link);link.click();document.body.removeChild(link);closePreviewModal();}
+        function closePreviewModal(){document.getElementById('previewModal').style.display='none';}
+        function clearForm(){document.getElementById("orderForm").reset();document.querySelectorAll(".quantity").forEach(q=>{q.value="0"});updateAll();}
+        updateAll();
     </script>
 </body>
 </html>
