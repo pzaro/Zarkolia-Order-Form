@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Φόρμα Παραγγελίας Προϊόντων</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Κατάλογος Προϊόντων</h1>
+        <div id="productButtonsContainer" class="product-buttons"></div>
+        
+        <form id="orderForm" onsubmit="return false;">
+            <h2>Η Παραγγελία Σας</h2>
+            <table id="product-table">
+                <thead>
+                    <tr><th>Ονομασία</th><th>Ποσότητα</th><th>Δώρα</th><th>Τελική Τιμή/Τεμ.</th><th>Σύνολο</th></tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+            <p id="empty-order-message">Η παραγγελία σας είναι κενή. Πατήστε ένα προϊόν παραπάνω για να ξεκινήσετε.</p>
+
+            <div class="totals-section">
+                <p>Καθαρή Αξία: <span id="net-value">0.00 €</span></p>
+                <p>Αξία ΦΠΑ (24%): <span id="vat-value">0.00 €</span></p>
+                <p><strong>Τελικό Ποσό:</strong> <span id="final-total">0.00 €</span></p>
+            </div>
+            
+            <h2>Στοιχεία Πελάτη</h2>
+            <div class="form-grid">
+                <div class="form-group"><label for="eponimia">Επωνυμία:</label><input type="text" id="eponimia" required></div>
+                <div class="form-group"><label for="afm">ΑΦΜ:</label><input type="text" id="afm"></div>
+                <div class="form-group"><label for="doy">ΔΟΥ:</label><input type="text" id="doy"></div>
+                <div class="form-group"><label for="mobile">Κινητό:</label><input type="tel" id="mobile"></div>
+                <div class="form-group"><label for="phone">Σταθερό:</label><input type="tel" id="phone"></div>
+                <div class="form-group"><label for="email">Email:</label><input type="email" id="email"></div>
+            </div>
+
+            <div class="bank-info">
+                <h3>Στοιχεία Κατάθεσης</h3>
+                <p><strong>IBAN:</strong> GR8901722520005252016160277</p>
+                <p><strong>Τράπεζα:</strong> Τράπεζα Πειραιώς</p>
+            </div>
+            <div class="export-buttons">
+                <button type="button" class="btn" style="background-color:#007bff" onclick="sendEmailViaClient()">Αποστολή με Email</button>
+                <button type="button" class="btn" style="background-color:#34
