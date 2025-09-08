@@ -44,46 +44,41 @@ h2 { font-size: 1.6em; border-bottom: 2px solid #4CAF50; padding-bottom: 8px; ma
     margin-bottom: 15px;
 }
 .tab-button {
-    background-color: #f1f1f1; float: left; border: none; outline: none; cursor: pointer;
-    padding: 14px 16px; transition: background-color 0.3s; font-size: 1em; font-weight: 500;
+    background-color: #f1f1f1;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: background-color 0.3s;
+    font-size: 1em;
+    font-weight: 500;
 }
 .tab-button:hover { background-color: #ddd; }
 .tab-button.active { background-color: #4CAF50; color: white; }
-.tab-content { display: none; padding: 6px 12px; border-top: none; animation: fadeEffect 0.5s; }
+.tab-content {
+    display: none;
+    padding: 6px 12px;
+    border-top: none;
+    animation: fadeEffect 0.5s;
+}
 @keyframes fadeEffect { from {opacity: 0;} to {opacity: 1;} }
 .tab-content h3 { font-size: 1.2em; color: #333; margin-top: 15px; margin-bottom: 10px; }
 .tab-content p, .tab-content li { text-align: justify; line-height: 1.7; color: #555; }
 .tab-content ul, .tab-content ol { padding-left: 20px; }
 .tab-content li { margin-bottom: 10px; }
 
-/* ΝΕΟ: Στυλ για τη Γρήγορη Προσθήκη στο modal */
-.modal-quick-add {
-    margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; display: flex;
-    align-items: center; justify-content: flex-end; gap: 15px;
-}
-.modal-quick-add label { font-weight: 600; color: #333; }
-.modal-quick-add input { width: 80px; padding: 10px; text-align: center; font-size: 1.1em; border: 1px solid #ccc; border-radius: 5px; }
-.modal-quick-add button {
-    padding: 10px 20px; border: none; border-radius: 5px; background-color: #28a745;
-    color: white; font-weight: bold; cursor: pointer; transition: background-color 0.2s;
-}
-.modal-quick-add button:hover { background-color: #218838; }
-
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
 .form-group label { display: block; margin-bottom: 7px; font-weight: 600; color: #555; font-size: 0.9em; }
 .form-group input { width: 100%; padding: 12px; border: 1px solid #dce1e6; border-radius: 6px; box-sizing: border-box; font-size: 1em; }
 .form-group input:focus { border-color: #4CAF50; box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15); outline: none; }
-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+table { width: 100%; border-collapse: collapse; margin-top: 25px; }
 th, td { border: 1px solid #e0e6ed; padding: 12px; text-align: left; vertical-align: middle; }
 th { background-color: #4CAF50; color: white; }
 #product-table tbody tr:nth-child(even) { background-color: #fbfcfd; }
 .effective-price { font-weight: bold; transition: color 0.3s; }
 .effective-price.discounted { color: #28a745; }
 .effective-price.normal { color: #333; }
-#empty-order-message {
-    text-align: center; color: #777; font-style: italic; padding: 30px; border: 2px dashed #ddd; border-radius: 8px;
-}
-
 .totals-section { margin-top: 30px; padding: 25px; text-align: right; background-color: #f8f8f8; border-radius: 8px; }
 .bank-info { margin-top: 20px; padding: 20px; border: 2px dashed #4CAF50; border-radius: 8px; background-color: #f0fff0; }
 .bank-info h3 { margin-top: 0; color: #2c3e50; }
@@ -96,4 +91,8 @@ th { background-color: #4CAF50; color: white; }
 .info-section h3 { margin-top: 0; }
 .info-section ul { padding-left: 20px; }
 
-@media (max-width: 767px) { .form-grid { grid-template-columns: 1fr; } }
+@media (max-width: 767px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
